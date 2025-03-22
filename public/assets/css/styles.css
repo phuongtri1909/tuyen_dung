@@ -1,0 +1,540 @@
+body {
+    background: #f4f4f5;
+    padding-top: 108px;
+    font-family: 'Quicksand', sans-serif;
+}
+
+.logo-d1-concepts {
+    height: 70px;
+}
+
+/* Custom styles for interview form */
+.interview-form .form-control,
+.interview-form .form-select {
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border: 1px solid #e2e8f0;
+    box-shadow: none;
+    transition: all 0.3s;
+}
+
+.interview-form .form-control:focus,
+.interview-form .form-select:focus {
+    border-color: #4776E6;
+    box-shadow: 0 0 0 0.2rem rgba(71, 118, 230, 0.25);
+}
+
+.interview-form label {
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #334155;
+}
+
+.interview-form .section-title {
+    border-left: 4px solid #4776E6;
+    padding-left: 10px;
+    margin: 25px 0 15px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.interview-form .help-text {
+    color: #64748b;
+    font-size: 0.85em;
+    margin-top: 4px;
+}
+
+.interview-form .radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.interview-form .radio-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.interview-form .radio-option input[type="radio"] {
+    margin-right: 5px;
+}
+
+/* Rating table styles */
+.rating-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.rating-table th,
+.rating-table td {
+    border: 1px solid #e2e8f0;
+    padding: 12px;
+    text-align: left;
+}
+
+.rating-table th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #334155;
+}
+
+.rating-table tr:nth-child(even) {
+    background-color: #f9fafb;
+}
+
+.rating-input {
+    width: 60px !important;
+    text-align: center;
+    height: 40px;
+    border-radius: 6px !important;
+    border: 1px solid #e2e8f0;
+    padding: 5px !important;
+}
+
+.criteria-description {
+    font-size: 13px;
+    color: #64748b;
+    font-style: italic;
+    margin-top: 4px;
+}
+
+/* Recommendation table styles */
+.recommendation-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.recommendation-table th,
+.recommendation-table td {
+    border: 1px solid #e2e8f0;
+    padding: 15px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.recommendation-table th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #334155;
+    width: 30%;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    margin-right: 0;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background-color: #f8fafc;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.checkbox-group label:hover {
+    background-color: #e2e8f0;
+}
+
+.checkbox-group input[type="radio"]:checked+span {
+    font-weight: 600;
+    color: #4776E6;
+}
+
+.signature-box {
+    min-height: 80px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #f8fafc;
+}
+
+/* Submit button styles */
+.btn-submit {
+    background: linear-gradient(45deg, #4776E6, #8E54E9);
+    border: none;
+    color: white;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 6px rgba(71, 118, 230, 0.25);
+}
+
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(71, 118, 230, 0.3);
+}
+
+/* Interviewers table */
+.interviewers-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.interviewers-table td {
+    border: 1px solid #e2e8f0;
+    padding: 12px;
+}
+
+.interviewers-table tr:nth-child(even) {
+    background-color: #f9fafb;
+}
+
+.interviewers-table td:first-child {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #334155;
+    width: 15%;
+}
+
+.interviewers-table td:nth-child(3) {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #334155;
+    width: 15%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .recommendation-table th {
+        width: 100%;
+        display: block;
+    }
+
+    .recommendation-table td {
+        width: 100%;
+        display: block;
+    }
+
+    .checkbox-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .checkbox-group label {
+        width: 100%;
+    }
+}
+
+/* Bổ sung CSS responsive cho form phỏng vấn */
+@media (max-width: 992px) {
+
+    /* Điều chỉnh các bảng trên tablet */
+    .rating-table,
+    .recommendation-table,
+    .interviewers-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        width: 100%;
+    }
+
+    .btn-submit {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* Hiển thị bảng đánh giá trên màn hình nhỏ */
+    .rating-table th,
+    .rating-table td {
+        padding: 8px;
+    }
+
+    .rating-input {
+        width: 50px !important;
+        height: 36px;
+    }
+
+    /* Điều chỉnh bảng người phỏng vấn */
+    .interviewers-table td:first-child,
+    .interviewers-table td:nth-child(3) {
+        width: 20%;
+    }
+
+    /* Điều chỉnh overall score */
+    .card.bg-light .d-flex {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .card.bg-light .d-flex>div {
+        margin-bottom: 10px;
+    }
+
+    /* Điều chỉnh bảng đề xuất */
+    .recommendation-table th {
+        width: 100%;
+        display: block;
+    }
+
+    .recommendation-table td,
+    .recommendation-table th+th {
+        width: 100%;
+        display: block;
+    }
+
+    .recommendation-table tr {
+        margin-bottom: 20px;
+        display: block;
+    }
+
+    .checkbox-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .checkbox-group label {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+
+    /* Điều chỉnh cho điện thoại */
+    .interview-form .section-title {
+        font-size: 16px;
+    }
+
+    .rating-table thead th:not(:first-child) {
+        width: 50px;
+        min-width: 50px;
+        padding: 5px;
+    }
+
+    .rating-table th,
+    .rating-table td {
+        padding: 5px;
+    }
+
+    .rating-input {
+        width: 40px !important;
+        height: 32px;
+        padding: 2px !important;
+    }
+
+    .criteria-description {
+        font-size: 11px;
+    }
+
+    /* Ẩn mô tả tiêu chí trên điện thoại để tiết kiệm không gian */
+    .rating-table .criteria-description {
+        display: none;
+    }
+
+    /* Hiển thị mô tả khi hover/touch */
+    .rating-table td:hover .criteria-description {
+        display: block;
+        position: absolute;
+        background-color: #fff;
+        border: 1px solid #e2e8f0;
+        padding: 8px;
+        border-radius: 4px;
+        z-index: 100;
+        width: 200px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Tối ưu không gian cho các radio button */
+    .radio-group {
+        gap: 5px;
+    }
+
+    .radio-option {
+        margin-bottom: 5px;
+    }
+
+    /* Tối ưu kích thước nút */
+    .btn-submit {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+
+    /* Điều chỉnh khoảng cách */
+    .row {
+        margin-left: -5px;
+        margin-right: -5px;
+    }
+
+    .col-12,
+    .col-md-6,
+    .col-md-4 {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+}
+
+/* Cải thiện trải nghiệm touch trên thiết bị cảm ứng */
+@media (pointer: coarse) {
+
+    .checkbox-group label,
+    .radio-option,
+    .btn-submit {
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    .rating-input {
+        height: 44px !important;
+    }
+
+    input[type="radio"],
+    input[type="checkbox"] {
+        min-width: 20px;
+        min-height: 20px;
+    }
+}
+
+/* Print styles - Tối ưu cho việc in */
+@media print {
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+
+    .rating-table,
+    .recommendation-table,
+    .interviewers-table {
+        page-break-inside: avoid;
+    }
+
+    .btn-submit {
+        display: none;
+    }
+
+    body {
+        font-size: 12pt;
+    }
+
+    .signature-box {
+        border: 1px solid #000;
+        min-height: 100px;
+    }
+
+    .checkbox-group input[type="radio"]:checked+span {
+        font-weight: bold;
+        color: #000;
+    }
+
+    .form-control {
+        border: none;
+        border-bottom: 1px solid #ddd;
+        border-radius: 0;
+    }
+}
+
+/* Tối ưu hiển thị bảng Overall Score trên mobile */
+@media (max-width: 767px) {
+
+    /* Đặc biệt cho bảng Overall Score */
+    .section-title+.rating-table {
+        display: table;
+        width: 100%;
+    }
+
+    /* Tối ưu kích thước cột trong bảng Overall Score */
+    .section-title+.rating-table th:first-child,
+    .section-title+.rating-table td:first-child {
+        width: 20%;
+        min-width: 80px;
+    }
+
+    .section-title+.rating-table th:nth-child(2),
+    .section-title+.rating-table td:nth-child(2) {
+        width: 30%;
+    }
+
+    /* Điều chỉnh cột average score */
+    .section-title+.rating-table td[rowspan="3"] {
+        width: 50%;
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    /* Điều chỉnh input trong average score */
+    .section-title+.rating-table td[rowspan="3"] input {
+        width: 60px !important;
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    /* Điều chỉnh badges */
+    .section-title+.rating-table .badge {
+        display: inline-block;
+        margin-top: 5px;
+        font-size: 10px;
+        padding: 5px 8px;
+        white-space: normal;
+    }
+}
+
+/* Điều chỉnh thêm cho màn hình rất nhỏ */
+@media (max-width: 480px) {
+
+    /* Điều chỉnh tổng quan cho bảng Overall Score */
+    .section-title+.rating-table th,
+    .section-title+.rating-table td {
+        padding: 6px 4px;
+        font-size: 12px;
+    }
+
+    /* Xử lý các badge */
+    .section-title+.rating-table .badge {
+        font-size: 9px;
+        padding: 3px 6px;
+        display: block;
+        margin-bottom: 3px;
+    }
+
+    /* Điều chỉnh đầu vào */
+    .section-title+.rating-table input[readonly] {
+        font-size: 12px;
+        padding: 4px !important;
+        height: 30px !important;
+    }
+}
+
+/* Điều chỉnh thẻ info phía dưới */
+@media (max-width: 767px) {
+    .card.bg-light .d-flex {
+        flex-direction: column;
+    }
+
+    .card.bg-light .d-flex>div {
+        margin-bottom: 8px;
+        width: 100%;
+    }
+
+    .card.bg-light .badge {
+        display: inline-block;
+        width: auto;
+        min-width: 120px;
+        text-align: center;
+    }
+}
