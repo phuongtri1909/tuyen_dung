@@ -10,10 +10,33 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <h5 class="mb-0">Danh sách ứng viên</h5>
                         <div class="d-flex align-items-center flex-wrap">
-                            <form action="{{ route('candidates.index') }}" method="GET" class="d-flex mb-2 mb-md-0">
-                                <input type="text" name="search" class="form-control form-control-sm me-2" placeholder="Tìm kiếm..."
-                                    value="{{ request('search') }}">
-                                <button type="submit" class="btn btn-outline-secondary btn-sm mb-0">Tìm</button>
+                            <form action="{{ route('candidates.index') }}" method="GET" class="d-flex flex-wrap mb-2 mb-md-0">
+                                <div class="d-flex me-2 mb-2 mb-md-0">
+                                    <input type="text" name="search" class="form-control form-control-sm me-2" placeholder="Tìm kiếm..."
+                                        value="{{ request('search') }}">
+                                </div>
+                                
+                                <div class="d-flex me-2 mb-2 mb-md-0">
+                                    <div class="input-group input-group-sm me-2">
+                                        <span class="input-group-text">Từ</span>
+                                        <input type="date" name="from_date" class="form-control form-control-sm" 
+                                            value="{{ request('from_date') }}">
+                                    </div>
+                                    
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">Đến</span>
+                                        <input type="date" name="to_date" class="form-control form-control-sm" 
+                                            value="{{ request('to_date') }}">
+                                    </div>
+                                </div>
+                    
+                                <button type="submit" class="btn btn-outline-secondary btn-sm mb-0 me-2">Tìm</button>
+                                
+                                @if(request()->hasAny(['search', 'from_date', 'to_date']))
+                                    <a href="{{ route('candidates.index') }}" class="btn btn-outline-danger btn-sm mb-0">
+                                        <i class="fas fa-times"></i> Xóa bộ lọc
+                                    </a>
+                                @endif
                             </form>
                             @if (auth()->user()->role == 'admin' || auth()->user()->role == 'hr')
                                 <a href="{{ route('candidates.create') }}" class="btn bg-gradient-primary btn-sm mb-0 ms-2" type="button">
@@ -50,6 +73,9 @@
                                         Phòng ban quản lý
                                     </th>
                                     <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        Ngày tạo
+                                    </th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
                                         {{ __('action') }}
                                     </th>
                                 </tr>
@@ -82,10 +108,20 @@
                                             </p>
                                         </td>
                                         <td class="text-center">
+                                            <p class="text-xs font-weight-bold mb-0 width-100">
+                                                {{ $candidate->created_at->format('d/m/Y') }}
+                                            </p>
+                                        </td>
+                                        <td class="text-center">
                                             <div class="d-flex align-items-start">
 
+                                                <a href="{{ route('generate.word', $candidate->id) }}"
+                                                    class="btn-warning btn-sm px-3 me-2" title="Xem w">
+                                                    <i class="fa-solid fa-file-word"></i>
+                                                </a>
+
                                                 @if(auth()->user()->role != 'admin')
-                                                    <a href="{{ route('candidates.interview',$candidate->id) }}"
+                                                    <a target="_blank" href="{{ route('candidates.interview',$candidate->id) }}"
                                                         class="btn-primary btn-sm px-3 me-2" title="Phỏng vấn">
                                                         <i class="fa-solid fa-users-viewfinder"></i>
                                                     </a>

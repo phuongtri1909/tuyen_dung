@@ -12,6 +12,193 @@ use Illuminate\Support\Facades\DB;
 class CandidateController extends Controller
 {
 
+    public function generateWordFromSavedData($id)
+    {
+        // Tìm dữ liệu ứng viên và các đánh giá liên quan
+        $candidate = Candidate::with(['evaluations', 'recommendations'])->findOrFail($id);
+
+        // Đường dẫn đến template
+        $templatePath = public_path('assets/file/my_template2.docx');
+        $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
+
+        // Thông tin cơ bản của ứng viên - sử dụng biến ngắn gọn
+        $templateProcessor->setValue('name', $candidate->full_name ?? '');
+        $templateProcessor->setValue('pos', $candidate->desired_position ?? '');
+        $templateProcessor->setValue('dept', $candidate->outlet_department ?? '');
+
+        // Loại hình công việc
+        $employmentType = $candidate->employment_type ?? '';
+        if (!empty($employmentType)) {
+            $isFullTime = $employmentType == 'full-time';
+            $templateProcessor->setValue('ft', $isFullTime ? '☑' : '☐');
+            $templateProcessor->setValue('cl', !$isFullTime ? '☑' : '☐');
+        } else {
+            // Trường hợp không có dữ liệu, để trống
+            $templateProcessor->setValue('ft', '');
+            $templateProcessor->setValue('cl', '');
+        }
+
+        // Thông tin người phỏng vấn
+        $templateProcessor->setValue('hr1', $candidate->hr_name ?? '');
+        $templateProcessor->setValue('hr2', $candidate->hr_date ?? '');
+        $templateProcessor->setValue('lm1', $candidate->lm_name ?? '');
+        $templateProcessor->setValue('lm2', $candidate->lm_date ?? '');
+        $templateProcessor->setValue('f1', $candidate->final_name ?? '');
+        $templateProcessor->setValue('f2', $candidate->final_date ?? '');
+
+        // Xử lý các câu hỏi Yes/No
+        $checkYes = 'Y̲e̲s̲';  // Yes có gạch chân
+        $checkNo = 'N̲o̲';    // No có gạch chân
+        $plainYes = 'Yes';         // Yes không gạch chân
+        $plainNo = 'No';           // No không gạch chân
+
+        // Mapping biến cũ sang biến mới ngắn gọn hơn
+        $booleanFields = [
+            'can_work_holidays' => 'q1',
+            'can_work_different_shifts' => 'q2',
+            'can_work_split_shifts' => 'q3',
+            'can_work_overtime' => 'q4',
+            'can_work_late_shift' => 'q5'
+        ];
+
+        foreach ($booleanFields as $dbField => $templateField) {
+            if (isset($candidate->$dbField) && $candidate->$dbField !== null) {
+                $value = (bool)$candidate->$dbField;
+                $templateProcessor->setValue("{$templateField}y", $value ? $checkYes : $plainYes);
+                $templateProcessor->setValue("{$templateField}n", !$value ? $checkNo : $plainNo);
+            } else {
+                $templateProcessor->setValue("{$templateField}y", $plainYes);
+                $templateProcessor->setValue("{$templateField}n", $plainNo);
+            }
+        }
+
+        // Các trường thông tin khác
+        $templateProcessor->setValue('nd', $candidate->notice_days ?? '');
+        $templateProcessor->setValue('ad', $candidate->available_date ?? '');
+        $templateProcessor->setValue('ms', $candidate->min_salary ?? '');
+
+        // Xử lý dữ liệu đánh giá
+        $evaluations = [];
+        $totalScores = [
+            'hr' => 0,
+            'lm' => 0,
+            'final' => 0
+        ];
+
+        // Tổ chức dữ liệu đánh giá theo cấu trúc role => criteria => rating
+        foreach ($candidate->evaluations as $evaluation) {
+            $evaluations[$evaluation->role][$evaluation->criteria] = $evaluation->rating;
+            $totalScores[$evaluation->role] += $evaluation->rating;
+        }
+
+        // Danh sách tiêu chí đánh giá - Sử dụng số để đánh dấu
+        $criteriaList = [
+            'appearance' => 'c1',
+            'english' => 'c2',
+            'chinese' => 'c3',
+            'japanese' => 'c4',
+            'computer' => 'c5',
+            'behavior' => 'c6',
+            'characteristics' => 'c7',
+            'communication' => 'c8',
+            'motivation' => 'c9',
+            'experience' => 'c10',
+            'customer' => 'c11',
+            'flexibility' => 'c12',
+            'teamwork' => 'c13'
+        ];
+
+        // Thiết lập giá trị đánh giá cho template - Map với shortcode
+        $roleMap = ['hr' => 'h', 'lm' => 'l', 'final' => 'f'];
+
+        foreach ($roleMap as $role => $shortRole) {
+            foreach ($criteriaList as $criteria => $shortCriteria) {
+                $rating = $evaluations[$role][$criteria] ?? '';
+                $templateProcessor->setValue("{$shortRole}{$shortCriteria}", $rating);
+            }
+        }
+
+        // Thiết lập tổng điểm cho mỗi vai trò
+        $templateProcessor->setValue('hts', $totalScores['hr']);
+        $templateProcessor->setValue('lts', $totalScores['lm']);
+        $templateProcessor->setValue('fts', $totalScores['final']);
+
+        // Tính điểm trung bình
+        $validScores = collect($totalScores)->filter(function ($score) {
+            return $score > 0;
+        });
+
+        $averageScore = $validScores->count() > 0 ? round($validScores->sum() / $validScores->count()) : 0;
+        $templateProcessor->setValue('avgs', $averageScore);
+
+        // Xác định đánh giá tổng thể
+        $checkMark = '☑';
+        $uncheck = '☐';
+
+        if ($averageScore >= 1 && $averageScore <= 52) {
+            $templateProcessor->setValue('us', $checkMark);
+            $templateProcessor->setValue('gs', $uncheck);
+            $templateProcessor->setValue('es', $uncheck);
+        } elseif ($averageScore >= 53 && $averageScore <= 104) {
+            $templateProcessor->setValue('us', $uncheck);
+            $templateProcessor->setValue('gs', $checkMark);
+            $templateProcessor->setValue('es', $uncheck);
+        } elseif ($averageScore >= 105) {
+            $templateProcessor->setValue('us', $uncheck);
+            $templateProcessor->setValue('gs', $uncheck);
+            $templateProcessor->setValue('es', $checkMark);
+        } else {
+            $templateProcessor->setValue('us', $uncheck);
+            $templateProcessor->setValue('gs', $uncheck);
+            $templateProcessor->setValue('es', $uncheck);
+        }
+
+        // Cấu trúc dữ liệu đề xuất
+        $recommendations = [];
+        foreach ($candidate->recommendations as $recommendation) {
+            $recommendations[$recommendation->role] = [
+                'action' => $recommendation->action,
+                'propose_next_step' => $recommendation->propose_next_step,
+                'other_position_detail' => $recommendation->other_position_detail
+            ];
+        }
+
+        // Thiết lập dữ liệu đề xuất cho template - Sử dụng mã ngắn
+        foreach ($roleMap as $role => $shortRole) {
+            // Text area action
+            $templateProcessor->setValue("{$shortRole}act", $recommendations[$role]['action'] ?? '');
+            $templateProcessor->setValue("{$shortRole}_opd", $recommendations[$role]['other_position_detail'] ?? '');
+
+            // Các tùy chọn đề xuất với mã ngắn
+            $proposeOptions = [
+                'highly_recommend' => 'hr',
+                'recommend' => 'rc',
+                'do_not_recommend' => 'dr',
+                'hold_consider' => 'hc',
+                'other_position' => 'op'
+            ];
+
+            $selectedOption = $recommendations[$role]['propose_next_step'] ?? '';
+
+            foreach ($proposeOptions as $option => $shortOption) {
+                $isSelected = ($selectedOption == $option);
+                // Ví dụ: h_hr, h_rc, l_hr, l_rc, f_hr, f_rc,...
+                $templateProcessor->setValue("{$shortRole}_{$shortOption}", $isSelected ? $checkMark : $uncheck);
+            }
+        }
+
+        // Phản hồi tham khảo
+        $templateProcessor->setValue('rf', $candidate->reference_feedback ?? '');
+
+
+        // Tạo file output
+        $outputPath = public_path('assets/file/generated/ie_' . $candidate->id . '_' . time() . '.docx');
+        $templateProcessor->saveAs($outputPath);
+
+        // Trả về file để download
+        return response()->download($outputPath)->deleteFileAfterSend(true);
+    }
+
     public function interview(Candidate $candidate)
     {
         try {
@@ -66,27 +253,6 @@ class CandidateController extends Controller
         }
     }
 
-    /**
-     * Xác định vai trò của người dùng trong quy trình phỏng vấn
-     */
-    private function determineInterviewRole($user, $candidate)
-    {
-        if ($user->hasRole('admin')) {
-            return 'admin'; // Admin có thể xem tất cả
-        } elseif ($user->hasRole('hr')) {
-            return 'hr'; // HR chỉ thấy điểm HR
-        } elseif (
-            $user->name == $candidate->lm_name ||
-            ($user->department_id == $candidate->department_id && $user->hasRole('manager'))
-        ) {
-            return 'lm'; // Line Manager thấy điểm LM và HR
-        } elseif ($user->name == $candidate->final_name || $user->hasRole('director')) {
-            return 'final'; // Final thấy điểm Final và HR
-        }
-
-        return 'viewer'; // Người dùng khác chỉ có thể xem, không thấy điểm
-    }
-
     public function saveInterview(Request $request, Candidate $candidate)
     {
         try {
@@ -107,8 +273,7 @@ class CandidateController extends Controller
                 'can_work_different_shifts' => $request->has('can_work_different_shifts') ? $request->can_work_different_shifts : null,
                 'can_work_split_shifts' => $request->has('can_work_split_shifts') ? $request->can_work_split_shifts : null,
                 'can_work_overtime' => $request->has('can_work_overtime') ? $request->can_work_overtime : null,
-                'can_work_late_shift' => $request->has('can_work_late_shift') ? $request->can_work_late_shift : null,
-
+                'can_work_late_shift' => $request->can_work_late_shift,
                 'notice_days' => $request->notice_days,
                 'available_date' => $request->available_date,
                 'min_salary' => $request->min_salary,
@@ -195,16 +360,25 @@ class CandidateController extends Controller
                     // Thêm đề xuất mới
                     $actionField = "action_{$role}";
                     $recommendationField = "{$role}_recommendation";
+                    $otherPositionDetailField = "{$role}_other_position_detail";
 
                     if (($request->has($actionField) && !empty($request->$actionField)) ||
                         ($request->has($recommendationField) && !empty($request->$recommendationField))
                     ) {
+                        $proposeNextStep = $request->$recommendationField ?? '';
+
+                        // Lưu thông tin other_position_detail nếu chọn other_position
+                        $otherPositionDetail = null;
+                        if ($proposeNextStep === 'other_position' && $request->has($otherPositionDetailField)) {
+                            $otherPositionDetail = $request->$otherPositionDetailField;
+                        }
 
                         RecommendedAction::create([
                             'candidate_id' => $candidate->id,
                             'role' => $role,
                             'action' => $request->$actionField ?? '',
-                            'propose_next_step' => $request->$recommendationField ?? ''
+                            'propose_next_step' => $proposeNextStep,
+                            'other_position_detail' => $otherPositionDetail
                         ]);
                     }
                 }
@@ -212,21 +386,31 @@ class CandidateController extends Controller
 
             DB::commit();
 
-            // Tính lại tổng điểm sau khi lưu
-            $totalScores = [
-                'hr' => Evaluation::where('candidate_id', $candidate->id)->where('role', 'hr')->sum('rating'),
-                'lm' => Evaluation::where('candidate_id', $candidate->id)->where('role', 'lm')->sum('rating'),
-                'final' => Evaluation::where('candidate_id', $candidate->id)->where('role', 'final')->sum('rating')
-            ];
+            // Nếu là yêu cầu AJAX (lưu tự động), trả về JSON
+            if ($request->ajax() || $request->has('auto_save')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Đã lưu dữ liệu thành công',
+                    'timestamp' => now()->format('H:i:s')
+                ]);
+            }
 
-            // Log kết quả đánh giá
-            \Log::info('Đánh giá ứng viên ' . $candidate->full_name . ' đã được cập nhật bởi ' . auth()->user()->name);
-
-            return redirect()->route('candidates.interview', $candidate->id)
+            // Ngược lại trả về redirect với thông báo
+            return redirect()->route('candidates.show', $candidate->id)
                 ->with('success', 'Đánh giá phỏng vấn đã được lưu thành công!');
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Lỗi lưu đánh giá ứng viên: ' . $e->getMessage());
+
+            // Nếu là yêu cầu AJAX (lưu tự động), trả về JSON
+            if ($request->ajax() || $request->has('auto_save')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không thể lưu đánh giá: ' . $e->getMessage()
+                ]);
+            }
+
+            // Ngược lại trả về redirect với thông báo lỗi
             return back()->with('error', 'Không thể lưu đánh giá: ' . $e->getMessage())->withInput();
         }
     }
@@ -237,7 +421,7 @@ class CandidateController extends Controller
     {
         $query = Candidate::query();
 
-        // Xử lý tìm kiếm
+        // Xử lý tìm kiếm theo tên, vị trí, phòng ban
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -247,12 +431,26 @@ class CandidateController extends Controller
             });
         }
 
+        // Xử lý tìm kiếm theo khoảng thời gian (created_at)
+        if ($request->has('from_date') && !empty($request->from_date)) {
+            $fromDate = date('Y-m-d 00:00:00', strtotime($request->from_date));
+            $query->where('created_at', '>=', $fromDate);
+        }
+
+        if ($request->has('to_date') && !empty($request->to_date)) {
+            $toDate = date('Y-m-d 23:59:59', strtotime($request->to_date));
+            $query->where('created_at', '<=', $toDate);
+        }
+
         // Phân quyền: nếu không phải admin và hr thì chỉ xem được ứng viên cùng phòng ban
         if (auth()->user()->role != 'admin' && auth()->user()->role != 'hr') {
             $query->where('department_id', auth()->user()->department_id);
         }
 
         $candidates = $query->latest()->paginate(10);
+        
+        // Đảm bảo duy trì các tham số tìm kiếm khi phân trang
+        $candidates->appends($request->except('page'));
 
         return view('admin.pages.candidates.index', compact('candidates'));
     }

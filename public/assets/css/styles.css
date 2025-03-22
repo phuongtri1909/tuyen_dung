@@ -538,3 +538,12 @@ body {
         text-align: center;
     }
 }
+
+#auto-save-status {
+    transition: opacity 0.5s ease-in-out;
+    opacity: 1;
+}
+
+#auto-save-status.fade-out {
+    opacity: 0;
+}

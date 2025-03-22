@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('role');
             $table->string('action');
             $table->enum('propose_next_step', ['highly_recommend', 'recommend', 'do_not_recommend','hold_consider','other_position']);
-
+            $table->string('other_position_detail')->nullable();
             $table->unique(['candidate_id', 'role', 'action']);
             $table->timestamps();
         });

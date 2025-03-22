@@ -738,9 +738,20 @@
                                             <label>
                                                 <input type="radio" name="hr_recommendation" value="other_position"
                                                     {{ isset($recommendations['hr']) && $recommendations['hr']['propose_next_step'] == 'other_position' ? 'checked' : '' }}
-                                                    {{ auth()->user()->role != 'hr' ? 'disabled' : '' }}>
+                                                    {{ auth()->user()->role != 'hr' ? 'disabled' : '' }}
+                                                    id="hr_other_position">
                                                 <span>Other position</span>
                                             </label>
+                                        </div>
+                                        
+                                        <!-- Thêm trường input mới cho other position detail -->
+                                        <div id="hr_other_position_detail_container" class="mt-2 {{ isset($recommendations['hr']) && $recommendations['hr']['propose_next_step'] == 'other_position' ? '' : 'd-none' }}">
+                                            <input type="text" 
+                                                name="hr_other_position_detail" 
+                                                class="form-control" 
+                                                placeholder="Specify other position"
+                                                value="{{ isset($recommendations['hr']) && $recommendations['hr']['propose_next_step'] == 'other_position' ? ($recommendations['hr']['other_position_detail'] ?? '') : '' }}"
+                                                {{ auth()->user()->role != 'hr' ? 'disabled' : '' }}>
                                         </div>
                                     </td>
                                 </tr>
@@ -793,9 +804,18 @@
                                                 <label>
                                                     <input {{ auth()->user()->role != 'lm' ? 'disabled' : '' }}
                                                         type="radio" name="lm_recommendation" value="other_position"
-                                                        {{ isset($recommendations['lm']) && $recommendations['lm']['propose_next_step'] == 'other_position' ? 'checked' : '' }}>
+                                                        {{ isset($recommendations['lm']) && $recommendations['lm']['propose_next_step'] == 'other_position' ? 'checked' : '' }}
+                                                        id="lm_other_position">
                                                     <span>Other position</span>
                                                 </label>
+                                            </div>
+
+                                            <div id="lm_other_position_detail_container"
+                                                class="mt-2 {{ isset($recommendations['lm']) && $recommendations['lm']['propose_next_step'] == 'other_position' ? '' : 'd-none' }}">
+                                                <input type="text" name="lm_other_position_detail"
+                                                    class="form-control" placeholder="Specify other position"
+                                                    value="{{ isset($recommendations['lm']) && $recommendations['lm']['propose_next_step'] == 'other_position' ? $recommendations['lm']['other_position_detail'] ?? '' : '' }}"
+                                                    {{ auth()->user()->role != 'lm' ? 'disabled' : '' }}>
                                             </div>
                                         </td>
                                     </tr>
@@ -850,9 +870,18 @@
                                                 <label>
                                                     <input type="radio" name="final_recommendation"
                                                         value="other_position"
-                                                        {{ isset($recommendations['final']) && $recommendations['final']['propose_next_step'] == 'other_position' ? 'checked' : '' }}>
+                                                        {{ isset($recommendations['final']) && $recommendations['final']['propose_next_step'] == 'other_position' ? 'checked' : '' }}
+                                                        id="final_other_position">
                                                     <span>Other position</span>
                                                 </label>
+                                            </div>
+
+                                            <div id="final_other_position_detail_container"
+                                                class="mt-2 {{ isset($recommendations['final']) && $recommendations['final']['propose_next_step'] == 'other_position' ? '' : 'd-none' }}">
+                                                <input type="text" name="final_other_position_detail"
+                                                    class="form-control" placeholder="Specify other position"
+                                                    value="{{ isset($recommendations['final']) && $recommendations['final']['propose_next_step'] == 'other_position' ? $recommendations['final']['other_position_detail'] ?? '' : '' }}"
+                                                    {{ auth()->user()->role != 'final' ? 'disabled' : '' }}>
                                             </div>
                                         </td>
                                     </tr>
@@ -863,7 +892,8 @@
                             <div class="form-group mb-4">
                                 <label for="reference_feedback">Phản hồi về thông tin tham khảo (thực hiện bởi
                                     NS/TBP) / Reference feedback (Conducted by HR/ LM)</label>
-                                <textarea {{ auth()->user()->role == 'final' ? 'disabled' : '' }} name="reference_feedback" id="reference_feedback" class="form-control" rows="4">{{ $candidate->reference_feedback ?? '' }}</textarea>
+                                <textarea {{ auth()->user()->role == 'final' ? 'disabled' : '' }} name="reference_feedback" id="reference_feedback"
+                                    class="form-control" rows="4">{{ $candidate->reference_feedback ?? '' }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -881,6 +911,72 @@
 
 @push('scripts-admin')
     <script>
+        // Xử lý hiển thị trường other position detail
+        document.addEventListener('DOMContentLoaded', function() {
+            // Xử lý cho HR
+            const hrOtherPositionRadio = document.getElementById('hr_other_position');
+            const hrOtherPositionDetailContainer = document.getElementById('hr_other_position_detail_container');
+
+            if (hrOtherPositionRadio && hrOtherPositionDetailContainer) {
+                // Xử lý khi load trang
+                if (hrOtherPositionRadio.checked) {
+                    hrOtherPositionDetailContainer.classList.remove('d-none');
+                }
+
+                // Xử lý khi thay đổi radio
+                document.querySelectorAll('input[name="hr_recommendation"]').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        if (radio.value === 'other_position') {
+                            hrOtherPositionDetailContainer.classList.remove('d-none');
+                        } else {
+                            hrOtherPositionDetailContainer.classList.add('d-none');
+                        }
+                    });
+                });
+            }
+
+            // Tương tự cho LM
+            const lmOtherPositionRadio = document.getElementById('lm_other_position');
+            const lmOtherPositionDetailContainer = document.getElementById('lm_other_position_detail_container');
+
+            if (lmOtherPositionRadio && lmOtherPositionDetailContainer) {
+                if (lmOtherPositionRadio.checked) {
+                    lmOtherPositionDetailContainer.classList.remove('d-none');
+                }
+
+                document.querySelectorAll('input[name="lm_recommendation"]').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        if (radio.value === 'other_position') {
+                            lmOtherPositionDetailContainer.classList.remove('d-none');
+                        } else {
+                            lmOtherPositionDetailContainer.classList.add('d-none');
+                        }
+                    });
+                });
+            }
+
+            // Tương tự cho Final
+            const finalOtherPositionRadio = document.getElementById('final_other_position');
+            const finalOtherPositionDetailContainer = document.getElementById(
+                'final_other_position_detail_container');
+
+            if (finalOtherPositionRadio && finalOtherPositionDetailContainer) {
+                if (finalOtherPositionRadio.checked) {
+                    finalOtherPositionDetailContainer.classList.remove('d-none');
+                }
+
+                document.querySelectorAll('input[name="final_recommendation"]').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        if (radio.value === 'other_position') {
+                            finalOtherPositionDetailContainer.classList.remove('d-none');
+                        } else {
+                            finalOtherPositionDetailContainer.classList.add('d-none');
+                        }
+                    });
+                });
+            }
+        });
+
         // Kiểm tra nhập số trong khoảng 1-10 cho các ô đánh giá
         document.querySelectorAll('.rating-input').forEach(input => {
             input.addEventListener('input', function() {
@@ -1007,6 +1103,127 @@
 
             // Tính điểm ban đầu nếu có dữ liệu
             calculateScores();
+        });
+
+        // Thêm chức năng lưu tự động (auto-save)
+        let saveTimeout;
+        const AUTO_SAVE_DELAY = 2000; // Đợi 2 giây sau khi người dùng dừng nhập
+
+        function autoSaveForm() {
+            // Xóa timeout cũ nếu có
+            if (saveTimeout) {
+                clearTimeout(saveTimeout);
+            }
+
+            // Đặt timeout mới để lưu dữ liệu
+            saveTimeout = setTimeout(function() {
+                const form = document.querySelector('.interview-form');
+                const formData = new FormData(form);
+
+                // Thêm flag để backend biết đây là yêu cầu lưu tự động
+                formData.append('auto_save', 'true');
+
+                // Hiển thị trạng thái đang lưu
+                const saveStatus = document.getElementById('auto-save-status');
+                if (saveStatus) {
+                    saveStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu...';
+                    saveStatus.classList.remove('d-none');
+                }
+
+                // Gửi dữ liệu qua AJAX
+                fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (saveStatus) {
+                            if (data.success) {
+                                saveStatus.innerHTML =
+                                    '<i class="fas fa-check-circle text-success"></i> Đã lưu lúc ' +
+                                    getCurrentTime();
+
+                                // Ẩn thông báo sau 3 giây
+                                setTimeout(() => {
+                                    saveStatus.classList.add('fade-out');
+                                    setTimeout(() => {
+                                        saveStatus.classList.add('d-none');
+                                        saveStatus.classList.remove('fade-out');
+                                    }, 500);
+                                }, 3000);
+                            } else {
+                                saveStatus.innerHTML =
+                                    '<i class="fas fa-exclamation-circle text-danger"></i> Lỗi: ' + (data
+                                        .message || 'Không thể lưu');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Lỗi khi lưu tự động:', error);
+                        if (saveStatus) {
+                            saveStatus.innerHTML =
+                                '<i class="fas fa-exclamation-circle text-danger"></i> Lỗi kết nối';
+                        }
+                    });
+            }, AUTO_SAVE_DELAY);
+        }
+
+        // Lấy thời gian hiện tại dạng HH:MM:SS
+        function getCurrentTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+        // Đăng ký sự kiện cho tất cả các trường nhập liệu trong form
+        document.addEventListener('DOMContentLoaded', function() {
+            // Thêm phần tử hiển thị trạng thái lưu vào DOM
+            const form = document.querySelector('.interview-form');
+            if (form) {
+                const saveStatusDiv = document.createElement('div');
+                saveStatusDiv.id = 'auto-save-status';
+                saveStatusDiv.className = 'position-fixed bottom-0 end-0 p-3 bg-light border rounded shadow d-none';
+                saveStatusDiv.style.zIndex = '1050';
+                document.body.appendChild(saveStatusDiv);
+
+                // Đăng ký sự kiện cho mọi phần tử trong form
+                const formInputs = form.querySelectorAll('input, textarea, select');
+                formInputs.forEach(input => {
+                    input.addEventListener('input', autoSaveForm);
+                    input.addEventListener('change', autoSaveForm);
+                });
+
+                // Đăng ký sự kiện cho các radio buttons và checkboxes
+                const radioCheckboxes = form.querySelectorAll('input[type="radio"], input[type="checkbox"]');
+                radioCheckboxes.forEach(elem => {
+                    elem.addEventListener('click', autoSaveForm);
+                });
+
+                // Đăng ký sự kiện cho nút nhấn đánh giá
+                const ratingInputs = form.querySelectorAll('.rating-input');
+                ratingInputs.forEach(input => {
+                    input.addEventListener('input', function() {
+                        // Vẫn thực hiện kiểm tra giá trị như trước
+                        let value = parseInt(this.value);
+                        if (isNaN(value) || value < 1) {
+                            this.value = 1;
+                        } else if (value > 10) {
+                            this.value = 10;
+                        }
+
+                        // Tính điểm
+                        calculateScores();
+
+                        // Lưu tự động
+                        autoSaveForm();
+                    });
+                });
+            }
         });
     </script>
 @endpush

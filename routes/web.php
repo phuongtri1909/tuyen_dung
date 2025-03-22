@@ -26,6 +26,8 @@ Route::group(['middleware' => 'auth'], function () {
     });
 
     Route::resource('candidates', CandidateController::class)->only(['index', 'show']);
+    // Tạo và tải xuống file Word từ dữ liệu đã lưu (tuỳ chọn)
+    Route::get('/generate-word/{id}', [CandidateController::class, 'generateWordFromSavedData'])->name('generate.word');
 });
 
 Route::group(['middleware' => 'guest'], function () {
@@ -36,9 +38,5 @@ Route::group(['middleware' => 'guest'], function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 });
 
-// Lưu dữ liệu từ form vào database
-Route::post('/save-word-data', [App\Http\Controllers\WordToHtmlController::class, 'saveWordData'])->name('save.word.data');
 
-// Tạo và tải xuống file Word từ dữ liệu đã lưu (tuỳ chọn)
-Route::get('/generate-word/{id}', [App\Http\Controllers\WordToHtmlController::class, 'generateWordFromSavedData'])->name('generate.word');
 

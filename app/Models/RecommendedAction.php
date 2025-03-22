@@ -13,6 +13,7 @@ class RecommendedAction extends Model
         'role',
         'action',
         'propose_next_step',
+        'other_position_detail'
     ];
 
     public function candidate()
