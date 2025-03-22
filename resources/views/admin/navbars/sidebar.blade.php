@@ -4,7 +4,7 @@
         <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0"
             aria-hidden="true" id="iconSidenav"></i>
         <a class="d-flex m-0 justify-content-center text-wrap" href="{{ route('admin.dashboard') }}">
-            <img class="logo-d1-concepts" src="{{ asset('assets/images/logo/logo-D1-CONCEPTS.png') }}"
+            <img class="logo-d1-concepts" src="{{ asset('assets/images/logo/logo.png') }}"
                 alt="logo-d1-concepts">
         </a>
     </div>
