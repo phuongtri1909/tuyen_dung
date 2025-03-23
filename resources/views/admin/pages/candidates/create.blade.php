@@ -14,7 +14,7 @@
 
                     @include('admin.pages.components.success-error')
 
-                    <form action="{{ route('candidates.store') }}" method="POST">
+                    <form action="{{ route('candidates.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
                         <div class="row">
@@ -73,6 +73,19 @@
                                         @endforeach
                                     </select>
                                     @error('department_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <!-- Thêm trường upload CV -->
+                            <div class="col-12 col-md-6">
+                                <div class="mb-3">
+                                    <label for="cv" class="form-label">CV (PDF)</label>
+                                    <input type="file" class="form-control @error('cv') is-invalid @enderror"
+                                        id="cv" name="cv" accept=".pdf">
+                                    <small class="text-muted">Chỉ chấp nhận file PDF</small>
+                                    @error('cv')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>

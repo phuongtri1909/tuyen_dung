@@ -14,7 +14,7 @@
 
                     @include('admin.pages.components.success-error')
 
-                    <form action="{{ route('candidates.update', $candidate->id) }}" method="POST">
+                    <form action="{{ route('candidates.update', $candidate->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
                     
@@ -79,6 +79,39 @@
                                     @enderror
                                 </div>
                             </div>
+                            
+                            <!-- Thêm trường upload CV -->
+                            <div class="col-12 col-md-6">
+                                <div class="mb-3">
+                                    <label for="cv" class="form-label">CV (PDF)</label>
+                                    <input type="file" class="form-control @error('cv') is-invalid @enderror"
+                                        id="cv" name="cv" accept=".pdf">
+                                    <small class="text-muted">Chỉ chấp nhận file PDF</small>
+                                    
+                                    @if($candidate->cv)
+                                        <div class="mt-2">
+                                            <span class="badge bg-info">CV hiện tại: {{ basename($candidate->cv) }}</span>
+                                            <a href="{{ asset('storage/' . $candidate->cv) }}" target="_blank" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i> Xem
+                                            </a>
+                                            <div class="form-check mt-1">
+                                                <input class="form-check-input" type="checkbox" id="remove_cv" name="remove_cv" value="1">
+                                                <label class="form-check-label" for="remove_cv">
+                                                    Xóa CV hiện tại
+                                                </label>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div class="mt-2">
+                                            <span class="badge bg-warning">Chưa có CV</span>
+                                        </div>
+                                    @endif
+                                    
+                                    @error('cv')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
                     
                         <div class="text-center mt-4">
@@ -94,4 +127,20 @@
 @endsection
 
 @push('scripts-admin')
+<script>
+    // Xử lý hiển thị các phần tử liên quan đến CV
+    document.addEventListener('DOMContentLoaded', function() {
+        const cvInput = document.getElementById('cv');
+        const removeCvCheckbox = document.getElementById('remove_cv');
+        
+        if (cvInput && removeCvCheckbox) {
+            // Nếu người dùng đã chọn file mới, tự động check vào ô xóa CV cũ
+            cvInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    removeCvCheckbox.checked = true;
+                }
+            });
+        }
+    });
+</script>
 @endpush

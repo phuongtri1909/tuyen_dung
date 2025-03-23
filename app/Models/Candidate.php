@@ -36,6 +36,7 @@ class Candidate extends Model
         'reference_feedback',
 
         'department_id',
+        'cv',
     ];
 
     public function department()

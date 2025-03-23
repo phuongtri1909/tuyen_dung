@@ -66,36 +66,60 @@
 
                                 <tr>
                                     <td>HR</td>
-                                    <td><input {{ auth()->user()->role != 'hr' ? 'disabled' : '' }} type="text"
-                                            name="hr_name" class="form-control" value="{{ $candidate->hr_name ?? '' }}">
+                                    <td>
+                                        <input {{ auth()->user()->role != 'hr' ? 'disabled' : '' }} 
+                                               type="text" 
+                                               name="hr_name" 
+                                               class="form-control" 
+                                               value="{{ $candidate->hr_name ?? (auth()->user()->role == 'hr' ? auth()->user()->name : '') }}">
                                     </td>
                                     <td>Date</td>
-                                    <td><input {{ auth()->user()->role != 'hr' ? 'disabled' : '' }} type="date"
-                                            name="hr_date" class="form-control"
-                                            value="{{ $candidate->hr_date ?? now()->format('Y-m-d') }}"></td>
+                                    <td>
+                                        <input {{ auth()->user()->role != 'hr' ? 'disabled' : '' }} 
+                                               type="date" 
+                                               name="hr_date" 
+                                               class="form-control"
+                                               value="{{ $candidate->hr_date ?? now()->format('Y-m-d') }}">
+                                    </td>
                                 </tr>
-
+                                
                                 @if (auth()->user()->role == 'lm' || auth()->user()->role == 'final')
                                     <tr>
                                         <td>LM</td>
-                                        <td><input {{ auth()->user()->role != 'lm' ? 'disabled' : '' }} type="text"
-                                                name="lm_name" class="form-control"
-                                                value="{{ $candidate->lm_name ?? '' }}"></td>
+                                        <td>
+                                            <input {{ auth()->user()->role != 'lm' ? 'disabled' : '' }} 
+                                                   type="text" 
+                                                   name="lm_name" 
+                                                   class="form-control"
+                                                   value="{{ $candidate->lm_name ?? (auth()->user()->role == 'lm' ? auth()->user()->name : '') }}">
+                                        </td>
                                         <td>Date</td>
-                                        <td><input {{ auth()->user()->role != 'lm' ? 'disabled' : '' }} type="date"
-                                                name="lm_date" class="form-control"
-                                                value="{{ $candidate->lm_date ?? now()->format('Y-m-d') }}"></td>
+                                        <td>
+                                            <input {{ auth()->user()->role != 'lm' ? 'disabled' : '' }} 
+                                                   type="date" 
+                                                   name="lm_date" 
+                                                   class="form-control"
+                                                   value="{{ $candidate->lm_date ?? now()->format('Y-m-d') }}">
+                                        </td>
                                     </tr>
                                 @endif
-
+                                
                                 @if (auth()->user()->role == 'final')
                                     <tr>
                                         <td>Final</td>
-                                        <td><input type="text" name="final_name" class="form-control"
-                                                value="{{ $candidate->final_name ?? '' }}"></td>
+                                        <td>
+                                            <input type="text" 
+                                                   name="final_name" 
+                                                   class="form-control"
+                                                   value="{{ $candidate->final_name ?? auth()->user()->name }}">
+                                        </td>
                                         <td>Date</td>
-                                        <td><input type="date" name="final_date" class="form-control"
-                                                value="{{ $candidate->final_date ?? now()->format('Y-m-d') }}"></td>
+                                        <td>
+                                            <input type="date" 
+                                                   name="final_date" 
+                                                   class="form-control"
+                                                   value="{{ $candidate->final_date ?? now()->format('Y-m-d') }}">
+                                        </td>
                                     </tr>
                                 @endif
                             </table>

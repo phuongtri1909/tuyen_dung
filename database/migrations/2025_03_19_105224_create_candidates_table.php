@@ -35,6 +35,7 @@ class CreateCandidatesTable extends Migration
             $table->string('min_salary')->nullable();
 
             $table->string('reference_feedback')->nullable();
+            $table->string('cv')->nullable();
 
             $table->foreignId('department_id')->nullable()->constrained()->onDelete('set null');
             $table->timestamps();

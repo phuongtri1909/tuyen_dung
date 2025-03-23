@@ -8,6 +8,7 @@ use App\Models\Evaluation;
 use Illuminate\Http\Request;
 use App\Models\RecommendedAction;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class CandidateController extends Controller
 {
@@ -192,7 +193,7 @@ class CandidateController extends Controller
 
 
         // Tạo file output
-        $outputPath = public_path('assets/file/generated/ie_' . $candidate->id . '_' . time() . '.docx');
+        $outputPath = public_path('assets/file/generated/ie_' . $candidate->full_name . '_' . time() . '.docx');
         $templateProcessor->saveAs($outputPath);
 
         // Trả về file để download
@@ -448,7 +449,7 @@ class CandidateController extends Controller
         }
 
         $candidates = $query->latest()->paginate(10);
-        
+
         // Đảm bảo duy trì các tham số tìm kiếm khi phân trang
         $candidates->appends($request->except('page'));
 
@@ -475,6 +476,7 @@ class CandidateController extends Controller
             'outlet_department' => 'required|string|max:255',
             'employment_type' => 'required|in:full-time,casual-labor',
             'department_id' => 'required|exists:departments,id',
+            'cv' => 'nullable|file|mimes:pdf'
         ], [
             'full_name.required' => 'Họ tên không được để trống',
             'desired_position.required' => 'Vị trí mong muốn không được để trống',
@@ -483,7 +485,13 @@ class CandidateController extends Controller
             'employment_type.in' => 'Loại hình công việc không hợp lệ',
             'department_id.required' => 'Phòng ban không được để trống',
             'department_id.exists' => 'Phòng ban không tồn tại',
+            'cv.mimes' => 'CV phải là file PDF',
         ]);
+
+        if ($request->hasFile('cv')) {
+            $cvPath = $request->file('cv')->store('candidate-cvs', 'public');
+            $validated['cv'] = $cvPath;
+        }
 
         Candidate::create($validated);
 
@@ -496,14 +504,25 @@ class CandidateController extends Controller
      */
     public function show(Candidate $candidate)
     {
-        if (auth()->user()->role != 'admin' && auth()->user()->role != 'hr') {
-            if ($candidate->department_id != auth()->user()->department_id) {
-                return redirect()->route('candidates.index')
-                    ->with('error', 'Không thể xem ứng viên này!');
-            }
+        $candidate->load(['evaluations', 'recommendations', 'department']);
+        
+        // Tổ chức dữ liệu đánh giá theo cấu trúc role => criteria => rating
+        $evaluations = [];
+        foreach ($candidate->evaluations as $evaluation) {
+            $evaluations[$evaluation->role][$evaluation->criteria] = $evaluation->rating;
         }
-
-        return view('admin.pages.candidates.show', compact('candidate'));
+        
+        // Tổ chức dữ liệu đề xuất theo role
+        $recommendations = [];
+        foreach ($candidate->recommendations as $recommendation) {
+            $recommendations[$recommendation->role] = [
+                'action' => $recommendation->action,
+                'propose_next_step' => $recommendation->propose_next_step,
+                'other_position_detail' => $recommendation->other_position_detail
+            ];
+        }
+        
+        return view('admin.pages.candidates.show', compact('candidate', 'evaluations', 'recommendations'));
     }
 
     /**
@@ -526,6 +545,7 @@ class CandidateController extends Controller
             'outlet_department' => 'required|string|max:255',
             'employment_type' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
+            'cv' => 'nullable|file|mimes:pdf'
         ], [
             'full_name.required' => 'Họ tên không được để trống',
             'desired_position.required' => 'Vị trí mong muốn không được để trống',
@@ -533,7 +553,28 @@ class CandidateController extends Controller
             'employment_type.required' => 'Loại hình công việc không được để trống',
             'department_id.required' => 'Phòng ban không được để trống',
             'department_id.exists' => 'Phòng ban không tồn tại',
+            'cv.mimes' => 'CV phải là file PDF',
         ]);
+
+        // Xử lý upload CV mới
+        if ($request->hasFile('cv')) {
+            // Xóa CV cũ nếu có
+            if ($candidate->cv) {
+                Storage::disk('public')->delete($candidate->cv);
+            }
+
+            // Lưu CV mới
+            $cvPath = $request->file('cv')->store('candidate-cvs', 'public');
+            $validated['cv'] = $cvPath;
+        }
+
+        // Xử lý xóa CV
+        if ($request->has('remove_cv') && $request->remove_cv && !$request->hasFile('cv')) {
+            if ($candidate->cv) {
+                Storage::disk('public')->delete($candidate->cv);
+            }
+            $validated['cv'] = null;
+        }
 
         // Cập nhật thông tin HR nếu người chỉnh sửa là HR và trước đó chưa có
         if (auth()->user()->role == 'hr' && empty($candidate->hr_name)) {
@@ -553,6 +594,11 @@ class CandidateController extends Controller
     public function destroy(Candidate $candidate)
     {
         try {
+
+            if ($candidate->cv) {
+                Storage::disk('public')->delete($candidate->cv);
+            }
+
             $candidate->delete();
             return redirect()->route('candidates.index')
                 ->with('success', 'Xóa ứng viên thành công!');
