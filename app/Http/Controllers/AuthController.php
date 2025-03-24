@@ -19,7 +19,7 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (auth()->attempt($credentials)) {
-            return redirect()->route('admin.dashboard');
+            return redirect()->route('candidates.index');
         }
         return redirect()->back()->withInput()->with('error', 'Username hoặc password không đúng');
     }

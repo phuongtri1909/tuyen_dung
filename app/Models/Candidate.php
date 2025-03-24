@@ -19,10 +19,21 @@ class Candidate extends Model
 
         'hr_name',
         'hr_date',
+        'hr_interview_date',
+        'hr_notified',
+        'hr_interviewer_id',
+        
         'lm_name',
         'lm_date',
+        'lm_interview_date',
+        'lm_notified',
+        'lm_interviewer_id',
+        
         'final_name',
         'final_date',
+        'final_interview_date',
+        'final_notified',
+        'final_interviewer_id',
 
         'can_work_holidays',
         'can_work_different_shifts',
@@ -37,6 +48,8 @@ class Candidate extends Model
 
         'department_id',
         'cv',
+
+        
     ];
 
     public function department()
@@ -53,5 +66,21 @@ class Candidate extends Model
     public function recommendations()
     {
         return $this->hasMany(RecommendedAction::class);
+    }
+
+    // Thêm các quan hệ với người phỏng vấn
+    public function hrInterviewer()
+    {
+        return $this->belongsTo(User::class, 'hr_interviewer_id');
+    }
+    
+    public function lmInterviewer()
+    {
+        return $this->belongsTo(User::class, 'lm_interviewer_id');
+    }
+    
+    public function finalInterviewer()
+    {
+        return $this->belongsTo(User::class, 'final_interviewer_id');
     }
 }

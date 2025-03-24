@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\EmailTemplateController;
 
 Route::group(['middleware' => 'auth'], function () {
     Route::get('/', function () {
@@ -18,6 +19,13 @@ Route::group(['middleware' => 'auth'], function () {
         Route::resource('departments', DepartmentController::class);
         Route::resource('users', UserController::class);
         Route::resource('candidates', CandidateController::class)->only(['create', 'store', 'edit', 'update', 'destroy']);
+
+        Route::get('/candidates/{candidate}/send-notification/{role}', [CandidateController::class, 'sendNotification'])
+            ->name('candidates.send-notification');
+
+        Route::get('/email-templates', [EmailTemplateController::class, 'index'])->name('email-templates.index');
+        Route::get('/email-templates/{id}/edit', [EmailTemplateController::class, 'edit'])->name('email-templates.edit');
+        Route::put('/email-templates/{id}', [EmailTemplateController::class, 'update'])->name('email-templates.update');
     });
 
     Route::group(['middleware' => UserHasRole::class . ':hr,lm,final'], function () {
@@ -37,6 +45,3 @@ Route::group(['middleware' => 'guest'], function () {
 
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 });
-
-
-

@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use App\Models\RecommendedAction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Mail\InterviewNotification;
+use Illuminate\Support\Facades\Mail;
+use App\Models\User;
 
 class CandidateController extends Controller
 {
@@ -415,12 +418,64 @@ class CandidateController extends Controller
             return back()->with('error', 'Không thể lưu đánh giá: ' . $e->getMessage())->withInput();
         }
     }
+
+    public function sendNotification(Candidate $candidate, $role)
+    {
+        try {
+            // Kiểm tra quyền admin
+            if (auth()->user()->role !== 'admin') {
+                return redirect()->back()->with('error', 'Bạn không có quyền thực hiện thao tác này!');
+            }
+
+            // Kiểm tra role hợp lệ
+            if (!in_array($role, ['hr', 'lm', 'final'])) {
+                return redirect()->back()->with('error', 'Vai trò không hợp lệ!');
+            }
+
+            // Kiểm tra xem có ngày phỏng vấn không
+            $dateField = "{$role}_interview_date";
+            if (!$candidate->$dateField) {
+                return redirect()->back()->with('error', 'Chưa có ngày phỏng vấn để gửi thông báo!');
+            }
+
+            // Xác định người phỏng vấn
+            $interviewerField = "{$role}_interviewer_id";
+            $interviewer = null;
+
+            if ($candidate->$interviewerField) {
+                // Nếu đã chỉ định người phỏng vấn cụ thể
+                $interviewer = User::find($candidate->$interviewerField);
+
+                if (!$interviewer || !$interviewer->email) {
+                    return redirect()->back()->with('error', 'Người phỏng vấn không có email hợp lệ!');
+                }
+
+                // Gửi email cho người phỏng vấn cụ thể
+                Mail::to($interviewer->email)
+                    ->send(new InterviewNotification($candidate, $role));
+            } else {
+                // thông báo chưa chỉ định người phỏng vấn
+                return redirect()->back()->with('error', 'Chưa chỉ định người phỏng vấn!');
+            }
+
+            // Cập nhật trạng thái đã thông báo
+            $notifiedField = "{$role}_notified";
+            $candidate->update([$notifiedField => true]);
+
+            return redirect()->back()->with('success', 'Đã gửi thông báo phỏng vấn thành công!');
+        } catch (\Exception $e) {
+            \Log::error('Lỗi gửi thông báo phỏng vấn: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Không thể gửi thông báo: ' . $e->getMessage());
+        }
+    }
+
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $query = Candidate::query();
+        $query = Candidate::with(['evaluations', 'department', 'hrInterviewer', 'lmInterviewer', 'finalInterviewer']);
 
         // Xử lý tìm kiếm theo tên, vị trí, phòng ban
         if ($request->has('search') && !empty($request->search)) {
@@ -462,7 +517,10 @@ class CandidateController extends Controller
     public function create()
     {
         $departments = Department::all();
-        return view('admin.pages.candidates.create', compact('departments'));
+        $hrUsers = User::where('role', 'hr')->get();
+        $lmUsers = User::where('role', 'lm')->get();
+        $finalUsers = User::where('role', 'final')->get();
+        return view('admin.pages.candidates.create', compact('departments', 'hrUsers', 'lmUsers', 'finalUsers'));
     }
 
     /**
@@ -470,13 +528,20 @@ class CandidateController extends Controller
      */
     public function store(Request $request)
     {
+        dd($request->all());
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
             'desired_position' => 'required|string|max:255',
             'outlet_department' => 'required|string|max:255',
             'employment_type' => 'required|in:full-time,casual-labor',
             'department_id' => 'required|exists:departments,id',
-            'cv' => 'nullable|file|mimes:pdf'
+            'cv' => 'nullable|file|mimes:pdf',
+            'hr_interview_date' => 'nullable|date',
+            'lm_interview_date' => 'nullable|date',
+            'final_interview_date' => 'nullable|date',
+            'hr_interviewer_id' => 'nullable|exists:users,id',
+            'lm_interviewer_id' => 'nullable|exists:users,id',
+            'final_interviewer_id' => 'nullable|exists:users,id',
         ], [
             'full_name.required' => 'Họ tên không được để trống',
             'desired_position.required' => 'Vị trí mong muốn không được để trống',
@@ -486,6 +551,12 @@ class CandidateController extends Controller
             'department_id.required' => 'Phòng ban không được để trống',
             'department_id.exists' => 'Phòng ban không tồn tại',
             'cv.mimes' => 'CV phải là file PDF',
+            'hr_interview_date.date' => 'Ngày phỏng vấn HR không hợp lệ',
+            'lm_interview_date.date' => 'Ngày phỏng vấn LM không hợp lệ',
+            'final_interview_date.date' => 'Ngày phỏng vấn Final không hợp lệ',
+            'hr_interviewer_id.exists' => 'Người phỏng vấn HR không tồn tại',
+            'lm_interviewer_id.exists' => 'Người phỏng vấn LM không tồn tại',
+            'final_interviewer_id.exists' => 'Người phỏng vấn Final không tồn tại',
         ]);
 
         if ($request->hasFile('cv')) {
@@ -504,14 +575,14 @@ class CandidateController extends Controller
      */
     public function show(Candidate $candidate)
     {
-        $candidate->load(['evaluations', 'recommendations', 'department']);
-        
+        $candidate->load(['evaluations', 'recommendations', 'department', 'hrInterviewer', 'lmInterviewer', 'finalInterviewer']);
+
         // Tổ chức dữ liệu đánh giá theo cấu trúc role => criteria => rating
         $evaluations = [];
         foreach ($candidate->evaluations as $evaluation) {
             $evaluations[$evaluation->role][$evaluation->criteria] = $evaluation->rating;
         }
-        
+
         // Tổ chức dữ liệu đề xuất theo role
         $recommendations = [];
         foreach ($candidate->recommendations as $recommendation) {
@@ -521,7 +592,7 @@ class CandidateController extends Controller
                 'other_position_detail' => $recommendation->other_position_detail
             ];
         }
-        
+
         return view('admin.pages.candidates.show', compact('candidate', 'evaluations', 'recommendations'));
     }
 
@@ -531,7 +602,11 @@ class CandidateController extends Controller
     public function edit(Candidate $candidate)
     {
         $departments = Department::all();
-        return view('admin.pages.candidates.edit', compact('candidate', 'departments'));
+        $hrUsers = User::where('role', 'hr')->get();
+        $lmUsers = User::where('role', 'lm')->get();
+        $finalUsers = User::where('role', 'final')->get();
+
+        return view('admin.pages.candidates.edit', compact('candidate', 'departments', 'hrUsers', 'lmUsers', 'finalUsers'));
     }
 
     /**
@@ -539,13 +614,20 @@ class CandidateController extends Controller
      */
     public function update(Request $request, Candidate $candidate)
     {
+      
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
             'desired_position' => 'required|string|max:255',
             'outlet_department' => 'required|string|max:255',
             'employment_type' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
-            'cv' => 'nullable|file|mimes:pdf'
+            'cv' => 'nullable|file|mimes:pdf',
+            'hr_interview_date' => 'nullable|date',
+            'lm_interview_date' => 'nullable|date',
+            'final_interview_date' => 'nullable|date',
+            'hr_interviewer_id' => 'nullable|exists:users,id',
+            'lm_interviewer_id' => 'nullable|exists:users,id',
+            'final_interviewer_id' => 'nullable|exists:users,id',
         ], [
             'full_name.required' => 'Họ tên không được để trống',
             'desired_position.required' => 'Vị trí mong muốn không được để trống',
@@ -554,6 +636,12 @@ class CandidateController extends Controller
             'department_id.required' => 'Phòng ban không được để trống',
             'department_id.exists' => 'Phòng ban không tồn tại',
             'cv.mimes' => 'CV phải là file PDF',
+            'hr_interview_date.date' => 'Ngày phỏng vấn HR không hợp lệ',
+            'lm_interview_date.date' => 'Ngày phỏng vấn LM không hợp lệ',
+            'final_interview_date.date' => 'Ngày phỏng vấn Final không hợp lệ',
+            'hr_interviewer_id.exists' => 'Người phỏng vấn HR không tồn tại',
+            'lm_interviewer_id.exists' => 'Người phỏng vấn LM không tồn tại',
+            'final_interviewer_id.exists' => 'Người phỏng vấn Final không tồn tại',
         ]);
 
         // Xử lý upload CV mới
@@ -581,6 +669,11 @@ class CandidateController extends Controller
             $validated['hr_name'] = auth()->user()->name;
             $validated['hr_date'] = now();
         }
+
+        // Xử lý các trường boolean
+        $validated['hr_notified'] = $request->has('hr_notified') ? true : false;
+        $validated['lm_notified'] = $request->has('lm_notified') ? true : false;
+        $validated['final_notified'] = $request->has('final_notified') ? true : false;
 
         $candidate->update($validated);
 

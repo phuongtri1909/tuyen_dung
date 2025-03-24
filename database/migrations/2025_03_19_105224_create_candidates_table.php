@@ -23,6 +23,16 @@ class CreateCandidatesTable extends Migration
             $table->date('final_date')->nullable();
             
 
+            $table->date('hr_interview_date')->nullable()->after('hr_date');
+            $table->date('lm_interview_date')->nullable()->after('lm_date');
+            $table->date('final_interview_date')->nullable()->after('final_date');
+            $table->boolean('hr_notified')->default(false)->after('hr_interview_date');
+            $table->boolean('lm_notified')->default(false)->after('lm_interview_date');
+            $table->boolean('final_notified')->default(false)->after('final_interview_date');
+            $table->foreignId('hr_interviewer_id')->nullable()->constrained('users')->onDelete('set null')->after('hr_interview_date');
+            $table->foreignId('lm_interviewer_id')->nullable()->constrained('users')->onDelete('set null')->after('lm_interview_date');
+            $table->foreignId('final_interviewer_id')->nullable()->constrained('users')->onDelete('set null')->after('final_interview_date');
+
             // Các lựa chọn Yes/No
             $table->boolean('can_work_holidays')->nullable();
             $table->boolean('can_work_different_shifts')->nullable();
